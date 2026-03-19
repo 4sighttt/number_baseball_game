@@ -1,29 +1,437 @@
-/* 핵심: history-item의 grid 구조를 3열로 변경 */
-.history-item{
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:16px;
-  padding:12px 16px;
-  display:grid;
-  grid-template-columns: minmax(88px,120px) auto minmax(70px,90px); /* ← 핵심 */
-  align-items:center;
-  gap:12px;
-}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>숫자 야구 게임</title>
+<style>
+  :root{
+    --bg:#0F1115;
+    --panel:#171b22;
+    --panel-2:#1A1D23;
+    --btn:#2A2F38;
+    --btn-hover:#343a46;
+    --btn-disabled:#20242c;
+    --text:#E5E7EB;
+    --muted:#6B7280;
+    --accent:#3B82F6;
+    --strike:#4CAF50;
+    --ball:#FFC107;
+    --out:#6B7280;
+    --border:#232833;
+  }
 
-/* 가운데 빈 영역 제거용 */
-.history-item::before{
-  content:"";
-  display:none;
-}
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+  }
 
-/* 결과 오른쪽 정렬 유지 */
-.result{
-  justify-content:flex-end;
-}
+  .app{
+    min-height:100dvh;
+    display:flex;
+    flex-direction:column;
+    padding:16px 16px 18px;
+    gap:14px;
+    max-width:760px;
+    margin:0 auto;
+  }
 
-/* 필요시: 간격 더 줄이고 싶으면 */
-/*
-.history-item{
-  grid-template-columns: minmax(88px,120px) minmax(70px,90px);
-}
-*/
+  .top{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+
+  .input-wrap{
+    display:flex;
+    justify-content:center;
+  }
+
+  .input-display{
+    min-height:68px;
+    min-width:220px;
+    padding:16px 20px;
+    border-radius:18px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    user-select:none;
+    cursor:default;
+  }
+
+  .slot{
+    font-size:34px;
+    font-weight:800;
+    line-height:1;
+    min-width:26px;
+    text-align:center;
+    color:var(--muted);
+  }
+
+  .slot.filled{
+    color:var(--text);
+  }
+
+  .subline{
+    text-align:center;
+    color:var(--muted);
+    font-size:14px;
+  }
+
+  .history{
+    flex:1;
+    min-height:180px;
+    background:transparent;
+    overflow:auto;
+    padding:2px 0 4px;
+  }
+
+  .history-list{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+
+  .history-item{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:12px 16px;
+    display:grid;
+    grid-template-columns:minmax(88px, 120px) 1fr;
+    align-items:center;
+    gap:12px;
+  }
+
+  .guess{
+    font-size:28px;
+    font-weight:800;
+    letter-spacing:1px;
+    color:var(--text);
+    line-height:1;
+  }
+
+  .result{
+    font-size:24px;
+    font-weight:800;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    line-height:1;
+  }
+
+  .token{
+    display:inline-flex;
+    align-items:center;
+    gap:2px;
+  }
+
+  .strike{color:var(--strike);}
+  .ball{color:var(--ball);}
+  .out{color:var(--out);}
+
+  .keypad{
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:10px;
+    position:sticky;
+    bottom:0;
+    background:linear-gradient(to top, rgba(15,17,21,0.96), rgba(15,17,21,0.82));
+    padding-top:8px;
+    max-width:720px;
+    width:100%;
+    margin:0 auto;
+  }
+
+  button{
+    border:none;
+    border-radius:16px;
+    background:var(--btn);
+    color:var(--text);
+    font-size:24px;
+    font-weight:700;
+    min-height:58px;
+    cursor:pointer;
+    transition:background .15s ease, transform .06s ease, opacity .15s ease;
+  }
+
+  button:hover{ background:var(--btn-hover); }
+  button:active{ transform:scale(0.985); }
+  button:disabled{
+    background:var(--btn-disabled);
+    color:#7b8190;
+    cursor:not-allowed;
+  }
+
+  .action-btn{
+    font-size:18px;
+    font-weight:800;
+  }
+
+  .mode-btn{
+    color:var(--accent);
+  }
+
+  .delete-btn{
+    color:#f1b6b6;
+  }
+
+  .empty{
+    color:var(--muted);
+    text-align:center;
+    padding:18px 8px;
+    font-size:15px;
+  }
+
+  .win-banner{
+    background:rgba(76,175,80,0.12);
+    color:var(--strike);
+    border:1px solid rgba(76,175,80,0.28);
+    border-radius:16px;
+    padding:14px 16px;
+    font-weight:800;
+    text-align:center;
+    margin-bottom:8px;
+  }
+
+  @media (max-width: 640px){
+    .app{ padding:12px 12px 14px; gap:12px; max-width:none; }
+    .slot{ font-size:30px; min-width:22px; }
+    .input-display{ min-height:62px; padding:14px 16px; gap:12px; }
+    .guess{ font-size:24px; }
+    .result{ font-size:21px; gap:8px; }
+    .history-item{
+      grid-template-columns:minmax(72px, 92px) 1fr;
+      padding:12px 14px;
+    }
+    .keypad{ max-width:none; }
+    button{ min-height:58px; font-size:24px; border-radius:14px; }
+    .action-btn{ font-size:16px; }
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <section class="top">
+      <div class="input-wrap">
+        <div class="input-display" id="inputDisplay" aria-live="polite"></div>
+      </div>
+      <div class="subline">모드: <span id="modeText">4자리</span> · 중복 없음 · 0 포함 · 입력 완료 시 자동 제출</div>
+    </section>
+
+    <section class="history" id="history">
+      <div id="winBanner"></div>
+      <div class="history-list" id="historyList"></div>
+      <div class="empty" id="emptyText">아래 키패드로 숫자를 입력하세요.</div>
+    </section>
+
+    <section class="keypad" id="keypad"></section>
+  </div>
+
+<script>
+(() => {
+  let mode = 4;
+  let answer = [];
+  let currentInput = [];
+  let history = [];
+  let lastSubmitted = [];
+  let isWon = false;
+
+  const inputDisplay = document.getElementById('inputDisplay');
+  const historyList = document.getElementById('historyList');
+  const keypad = document.getElementById('keypad');
+  const emptyText = document.getElementById('emptyText');
+  const modeText = document.getElementById('modeText');
+  const winBanner = document.getElementById('winBanner');
+
+  function generateAnswer() {
+    const digits = [];
+    while (digits.length < mode) {
+      const n = Math.floor(Math.random() * 10);
+      if (!digits.includes(n)) digits.push(n);
+    }
+    answer = digits;
+  }
+
+  function resetGame() {
+    currentInput = [];
+    history = [];
+    lastSubmitted = [];
+    isWon = false;
+    generateAnswer();
+    renderAll();
+  }
+
+  function switchMode() {
+    mode = mode === 3 ? 4 : 3;
+    resetGame();
+  }
+
+  function deleteLast() {
+    if (currentInput.length > 0) {
+      currentInput.pop();
+      renderAll();
+    }
+  }
+
+  function getDisplayDigits() {
+    const source = currentInput.length > 0 ? currentInput : lastSubmitted;
+    const digits = [...source];
+    while (digits.length < mode) digits.push('_');
+    return digits;
+  }
+
+  function renderInput() {
+    const digits = getDisplayDigits();
+    inputDisplay.innerHTML = digits.map(d => {
+      const filled = d !== '_';
+      return `<span class="slot ${filled ? 'filled' : ''}">${d}</span>`;
+    }).join('');
+    modeText.textContent = `${mode}자리`;
+  }
+
+  function renderHistory() {
+    historyList.innerHTML = '';
+    emptyText.style.display = history.length === 0 ? 'block' : 'none';
+
+    history.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'history-item';
+
+      const guess = document.createElement('div');
+      guess.className = 'guess';
+      guess.textContent = item.guess.join('');
+
+      const result = document.createElement('div');
+      result.className = 'result';
+
+      if (item.strikes > 0) {
+        const s = document.createElement('span');
+        s.className = 'token strike';
+        s.textContent = `${item.strikes}S`;
+        result.appendChild(s);
+      }
+      if (item.balls > 0) {
+        const b = document.createElement('span');
+        b.className = 'token ball';
+        b.textContent = `${item.balls}B`;
+        result.appendChild(b);
+      }
+      if (item.strikes === 0 && item.balls === 0) {
+        const o = document.createElement('span');
+        o.className = 'token out';
+        o.textContent = `OUT`;
+        result.appendChild(o);
+      }
+
+      row.appendChild(guess);
+      row.appendChild(result);
+      historyList.appendChild(row);
+    });
+
+    if (isWon) {
+      winBanner.className = 'win-banner';
+      winBanner.textContent = `정답 ${answer.join('')} · 모드 버튼으로 ${mode === 3 ? '4자리' : '3자리'} 전환 또는 계속 새 게임`;
+    } else {
+      winBanner.className = '';
+      winBanner.textContent = '';
+    }
+  }
+
+  function renderKeypad() {
+    keypad.innerHTML = '';
+
+    const layout = [
+      1, 2, 3,
+      4, 5, 6,
+      7, 8, 9,
+      'MODE', 0, 'DEL'
+    ];
+
+    const used = new Set(currentInput);
+
+    layout.forEach(item => {
+      const btn = document.createElement('button');
+
+      if (item === 'MODE') {
+        btn.textContent = mode === 3 ? '4자리' : '3자리';
+        btn.className = 'action-btn mode-btn';
+        btn.addEventListener('click', switchMode);
+      } else if (item === 'DEL') {
+        btn.textContent = '지우기';
+        btn.className = 'action-btn delete-btn';
+        btn.disabled = currentInput.length === 0;
+        btn.addEventListener('click', deleteLast);
+      } else {
+        btn.textContent = String(item);
+        btn.disabled = used.has(item) || isWon;
+        btn.addEventListener('click', () => pressDigit(item));
+      }
+
+      keypad.appendChild(btn);
+    });
+  }
+
+  function evaluateGuess(guess) {
+    let strikes = 0;
+    let balls = 0;
+
+    for (let i = 0; i < mode; i++) {
+      if (guess[i] === answer[i]) strikes++;
+      else if (answer.includes(guess[i])) balls++;
+    }
+
+    return { strikes, balls };
+  }
+
+  function submitGuess() {
+    const guess = [...currentInput];
+    const result = evaluateGuess(guess);
+    history.unshift({ guess, ...result });
+    lastSubmitted = guess;
+    currentInput = [];
+
+    if (result.strikes === mode) {
+      isWon = true;
+    }
+
+    renderAll();
+  }
+
+  function pressDigit(n) {
+    if (isWon) return;
+
+    if (currentInput.length === 0 && lastSubmitted.length > 0) {
+      currentInput = [];
+    }
+
+    if (!currentInput.includes(n) && currentInput.length < mode) {
+      currentInput.push(n);
+      renderAll();
+
+      if (currentInput.length === mode) {
+        submitGuess();
+      }
+    }
+  }
+
+  function renderAll() {
+    renderInput();
+    renderHistory();
+    renderKeypad();
+  }
+
+  resetGame();
+})();
+</script>
+</body>
+</html>

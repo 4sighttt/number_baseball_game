@@ -86,8 +86,8 @@
   }
 
   .history{
-    flex:1;
-    min-height:180px;
+    flex:0 1 auto;
+    min-height:0;
     background:transparent;
     overflow:auto;
     padding:2px 0 4px;
@@ -105,7 +105,7 @@
     border-radius:16px;
     padding:12px 16px;
     display:grid;
-    grid-template-columns:minmax(88px, 120px) 1fr;
+    grid-template-columns:minmax(88px, 120px) auto;
     align-items:center;
     gap:12px;
   }
@@ -150,6 +150,7 @@
     max-width:720px;
     width:100%;
     margin:0 auto;
+    margin-top:auto;
   }
 
   button{
@@ -210,7 +211,7 @@
     .guess{ font-size:24px; }
     .result{ font-size:21px; gap:8px; }
     .history-item{
-      grid-template-columns:minmax(72px, 92px) 1fr;
+      grid-template-columns:minmax(72px, 92px) auto;
       padding:12px 14px;
     }
     .keypad{ max-width:none; }
@@ -225,8 +226,7 @@
       <div class="input-wrap">
         <div class="input-display" id="inputDisplay" aria-live="polite"></div>
       </div>
-      <div class="subline">모드: <span id="modeText">4자리</span> · 중복 없음 · 0 포함 · 입력 완료 시 자동 제출</div>
-    </section>
+</section>
 
     <section class="history" id="history">
       <div id="winBanner"></div>
@@ -296,7 +296,7 @@
       const filled = d !== '_';
       return `<span class="slot ${filled ? 'filled' : ''}">${d}</span>`;
     }).join('');
-    modeText.textContent = `${mode}자리`;
+    if (modeText) modeText.textContent = `${mode}자리`;
   }
 
   function renderHistory() {

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>숫자 야구 게임</title>
+<style>
+body {margin:0;font-family:sans-serif;background:#0F1115;color:#E5E7EB;display:flex;flex-direction:column;height:100vh;}
+.top {padding:20px;text-align:center;}
+.input {font-size:32px;letter-spacing:10px;cursor:pointer;}
+.log {flex:1;overflow:auto;padding:10px;}
+.keypad {display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:10px;}
+button {padding:20px;font-size:20px;border:none;border-radius:12px;background:#2A2F38;color:#E5E7EB;}
+button:disabled {background:#555;}
+</style>
+</head>
+<body>
+<div class="top">
+<div id="input" class="input"></div>
+<button onclick="resetGame()">새 게임</button>
+</div>
+<div id="log" class="log"></div>
+<div id="keypad" class="keypad"></div>
+
+<script>
+let mode=3;
+let answer=[];
+let input=[];
+function init(){
+generateAnswer();
+render();
+}
+function generateAnswer(){
+answer=[];
+while(answer.length<mode){
+let n=Math.floor(Math.random()*10);
+if(!answer.includes(n)) answer.push(n);
+}
+input=[];
+}
+function render(){
+document.getElementById('input').innerText=input.concat(Array(mode-input.length).fill('_')).join(' ');
+renderKeypad();
+}
+function renderKeypad(){
+let kp=document.getElementById('keypad');
+kp.innerHTML='';
+for(let i=0;i<=9;i++){
+let btn=document.createElement('button');
+btn.innerText=i;
+btn.disabled=input.includes(i);
+btn.onclick=()=>press(i);
+kp.appendChild(btn);
+}
+}
+function press(n){
+if(input.length<mode){
+input.push(n);
+render();
+if(input.length===mode) submit();
+}
+}
+function submit(){
+let s=0,b=0;
+for(let i=0;i<mode;i++){
+if(input[i]===answer[i]) s++;
+else if(answer.includes(input[i])) b++;
+}
+let div=document.createElement('div');
+div.innerText=input.join('')+' → '+s+'S '+b+'B';
+document.getElementById('log').prepend(div);
+if(s===mode){
+alert('정답!');
+}
+input=[];
+render();
+}
+function resetGame(){
+generateAnswer();
+document.getElementById('log').innerHTML='';
+render();
+}
+document.getElementById('input').onclick=()=>{
+mode=mode===3?4:3;
+resetGame();
+}
+init();
+</script>
+</body>
+</html>
